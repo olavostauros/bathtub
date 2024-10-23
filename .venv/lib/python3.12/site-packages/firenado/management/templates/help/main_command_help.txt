@@ -1,0 +1,8 @@
+Commands are:
+{% for category in command_categories %}
+{{ category }}:
+
+    {% for command in command_categories[category] %}{{ command_template.format(command) }}
+    {% end %}{% end %}
+Optional arguments:
+  -h, --help  show this help message and exit

@@ -1,0 +1,2 @@
+[console_scripts]
+firenado = firenado.management:run_from_command_line

@@ -1,0 +1,139 @@
+# -*- coding: UTF-8 -*-
+#
+# Copyright 2015-2023 Flavio Garcia
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from .sqlalchemy import with_session
+import functools
+import importlib
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+
+class FirenadoService:
+    """ Base class to handle services. A Firenado service is usually connected
+    to a handler or a service.
+    The developer can add extra configuration using the configuration_service
+    method and can get a data source from the data connected instance using
+    either get_data_sources or get_data_source methods.
+    """
+
+    def __init__(self, consumer, data_source=None):
+        self.consumer = consumer
+        self.data_source = data_source
+        self.configure_service()
+
+    def configure_service(self):
+        """ Use this method to add configurations to your service class.
+        """
+        pass
+
+    def get_data_source(self, name):
+        """ Returns a data source by its given name.
+        """
+        return self.get_data_sources()[name]
+
+    def get_data_sources(self):
+        """ If a data connected is returned then returns all data sources.
+        If not returns None.
+
+        :return: The data connected data sources
+        """
+        data_connected = self.data_connected
+        if data_connected is not None:
+            return data_connected.data_sources
+        return None
+
+    @property
+    def data_connected(self):
+        """ Will recurse over services until the data connected instance.
+        If service has no consumer returns None.
+
+        :return: The data connected object in the top of the hierarchy.
+        """
+        if self.consumer is None:
+            return None
+        from firenado.data import DataConnectedMixin
+        if isinstance(self.consumer, DataConnectedMixin):
+            return self.consumer
+        invert_op = getattr(self.consumer, "get_data_connected", None)
+        if callable(invert_op):
+            return self.consumer.get_data_connected()
+        return self.consumer.data_connected
+
+
+def served_by(service, attribute_name=None):
+    import warnings
+    warnings.warn(
+        "The \"firenado.service.served_by\" function is depreciated. "
+        "Please use firenado.service.with_service instead.",
+        DeprecationWarning, 2)
+    return with_service(service, attribute_name)
+
+
+def with_service(service, attribute_name=None):
+    """ Decorator that connects a service to a service consumer.
+    """
+
+    def f_wrapper(method):
+        @functools.wraps(method)
+        def wrapper(self, *args, **kwargs):
+            if isinstance(service, str):
+                service_x = service.split('.')
+                service_module = importlib.import_module(
+                    '.'.join(service_x[:-1]))
+                service_class = getattr(service_module, service_x[-1])
+                service_name = service_x[-1]
+            else:
+                service_class = service
+                service_name = service.__name__
+            service_attribute = ''
+            if attribute_name is None:
+                first = True
+                for s in service_name:
+                    if s.isupper():
+                        if first:
+                            service_attribute = ''.join([
+                                service_attribute, s.lower()])
+                        else:
+                            service_attribute = ''.join([
+                                service_attribute, '_', s.lower()])
+                    else:
+                        service_attribute = ''.join([service_attribute, s])
+                    first = False
+            else:
+                service_attribute = attribute_name
+            must_set_service = False
+            if not hasattr(self, service_attribute):
+                must_set_service = True
+            else:
+                if getattr(self, service_attribute) is None:
+                    must_set_service = True
+            if must_set_service:
+                setattr(self, service_attribute, service_class(self))
+            return method(self, *args, **kwargs)
+
+        return wrapper
+    return f_wrapper
+
+
+def sessionned(*args, **kwargs):
+    import warnings
+    warnings.warn(
+        "The \"firenado.service.sessioned\" module is depreciated. "
+        "Please use firenado.sqlalchemy.with_session  instead.",
+        DeprecationWarning, 2)
+    return with_session(*args, **kwargs)

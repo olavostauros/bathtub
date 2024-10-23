@@ -1,0 +1,38 @@
+Metadata-Version: 2.1
+Name: taskio
+Version: 0.0.7
+Summary: A Python library for command-line argument processing.
+Home-page: https://github.com/candango/taskio
+Author: Flavio Garcia
+Author-email: piraz@candango.org
+Maintainer: Flavio Garcia
+Maintainer-email: piraz@candango.org
+License: Apache License V2.0
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Topic :: Software Development :: Libraries
+Requires-Python: >= 3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: cartola >=0.17
+Requires-Dist: click ==8.1.7
+
+# Candango Taskio
+
+A Python library for command-line argument processing.
+
+## License
+
+**Apache License V2.0**
+
+Copyright © 2019-2023 Flavio Garcia
